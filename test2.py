@@ -2,30 +2,35 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
-'''
-Feng, Jianjiang, and Anil K. Jain. "Fingerprint reconstruction: from minutiae to phase." IEEE transactions on pattern analysis and machine intelligence 33.2 (2010): 209-223.
-'''
-
 size = 480
 
-phi_c = np.zeros((size,size))
+
 phi_s = np.zeros((size,size))
+phi_s_temp = np.zeros((size,size))
 
-for i in range(size):
+with open('1_1.txt') as f:
+    data = f.readlines()
+
+for i in range(4,len(data)):
+    minutiae_x = int(data[i].split(' ')[0])
+    minutiae_y = int(data[i].split(' ')[1])
+
+    minutiae_x = (minutiae_x - size*0.5)/1
+    minutiae_y = (minutiae_y - size*0.5)/1
+
     for j in range(size):
-        x = (i-size*0.5)/10
-        y = (j-size*0.5)/10
-        phi_c[i][j] = x + y
-        phi_s[i][j] = -np.arctan2(x-0,y-0)
+        for k in range(size):
+            x = (j-size*0.5)/1
+            y = (k-size*0.5)/1
+            phi_s_temp[j][k] = np.arctan2(x-minutiae_x,y-minutiae_y) + np.pi
+
+    phi_s = (phi_s + phi_s_temp) % (2*np.pi)
+
+phi_s = phi_s - np.pi
 
 
-plt.imshow(np.cos(phi_s+phi_c))
-plt.show()
 
-plt.imshow(phi_s)
-plt.show()
-
-def drawOrientation(ori, background, mask=None, block_size=16, color=(255,0, 0), thickness=1, is_block_ori=False):
+def drawOrientation(ori, background, mask=None, block_size=8, color=(255,0, 0), thickness=1, is_block_ori=False):
     h = ori.shape[0]
     w = ori.shape[1]
     if is_block_ori:
@@ -51,7 +56,7 @@ def drawOrientation(ori, background, mask=None, block_size=16, color=(255,0, 0),
             x2 = int(x0 - 0.4 * block_size * np.cos(th))
             y2 = int(y0 - 0.4 * block_size * np.sin(th))
             cv2.line(background, (x1, y1), (x2, y2), color, thickness)
-            cv2.circle(background,(x2,y2),radius=thickness*2,color=color,thickness=thickness)
+            
     return background
 
 
@@ -64,4 +69,6 @@ for i in range(size):
 
 vis = drawOrientation(grad,(np.ones((size,size,3))*255).astype(np.uint8))
 plt.imshow(vis)
+plt.show()
+plt.imshow(phi_s)
 plt.show()
